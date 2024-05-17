@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Network Traffic Dashboard</title>
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        canvas {
+            -moz-user-select: none;
+            -webkit-user-select: none;
+            -ms-user-select: none;
+        }
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 50px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Network Traffic Overview</h1>
+    <div style="width:80%;">
+        <canvas id="myChart"></canvas>
+    </div>
+    <script>
+        var socket = io();
+        var ctx = document.getElementById('myChart').getContext('2d');
+        var myChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Bandwidth Usage (bytes)',
+                    data: [],
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    
+        socket.on('new_data', function(datas) {
+            datas.forEach(function(data) {
+                var index = myChart.data.labels.indexOf(data.protocol);
+                if (index === -1) {
+                    myChart.data.labels.push(data.protocol);
+                    myChart.data.datasets.forEach((dataset) => {
+                        dataset.data.push(data.bandwidth);
+                    });
+                } else {
+                    myChart.data.datasets.forEach((dataset) => {
+                        dataset.data[index] = data.bandwidth;
+                    });
+                }
+            });
+            myChart.update();
+        });
+    </script>
+    
+</body>
+</html>
